@@ -61,21 +61,27 @@ function loadTextureForGLTF(path, useForColorData = false)
   return texture;
 }
 
-// Q1 TODO
+// Q1
 // Q1 HINT: Keep in mind that only the albedo and emissive maps are used for color data.
 const helmetAlbedoMap = loadTextureForGLTF('./gltf/DamagedHelmet/Default_albedo.jpg', true);
-// const helmetNormalMap = ;
-// const helmetEmissiveMap = ;
-// const helmetAmbientOcclusionMap = ;
-// const helmetMetallicAndRoughnessMap = ;
+const helmetEmissiveMap = loadTextureForGLTF('./gltf/DamagedHelmet/Default_emissive.jpg', true);
+const helmetNormalMap = loadTextureForGLTF('./gltf/DamagedHelmet/Default_normal.jpg');
+const helmetAmbientOcclusionMap = loadTextureForGLTF('./gltf/DamagedHelmet/Default_AO.jpg');
+const helmetMetallicAndRoughnessMap = loadTextureForGLTF('./gltf/DamagedHelmet/Default_metalRoughness.jpg');
 
 const helmetMaterial = new THREE.MeshStandardMaterial({
+  // Q1 : You must set the map, normalMap, emissiveMap, roughnessMap, metalnessMap, and aoMap properties of helmetMaterial
+
   emissive: new THREE.Color(1,1,1),
   metalness: 1.0,
   envMapIntensity: 1.0,
 
   map: helmetAlbedoMap,
-  // Q1 TODO: You must set the map, normalMap, emissiveMap, roughnessMap, metalnessMap, and aoMap properties of helmetMaterial
+  emissiveMap: helmetEmissiveMap,
+  normalMap: helmetNormalMap,
+  aoMap: helmetAmbientOcclusionMap,
+  metalnessMap: helmetMetallicAndRoughnessMap,
+  roughnessMap: helmetMetallicAndRoughnessMap,
 
 });
 
@@ -87,8 +93,8 @@ new THREE.EXRLoader()
 
       IBLScene.background = hdrCubeRenderTarget.texture; // hdrCubeRenderTarget.texture is a cubemap texture.
 
-      // Q1 TODO: You must set the envMap property of helmetMaterial. the envMap must be a cubemap texture
-
+      // Q1: You must set the envMap property of helmetMaterial. the envMap must be a cubemap texture
+      helmetMaterial.envMap = hdrCubeRenderTarget.texture;
       helmetMaterial.needsUpdate = true;
 
       texture.dispose();
