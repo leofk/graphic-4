@@ -168,12 +168,18 @@ const skyboxCubemap = new THREE.CubeTextureLoader() //Q3 Answer, adding texture 
 .setPath( 'images/cubemap/' );
 const skyboxTexture = skyboxCubemap.load( [
   // Qb) : Load the images for the sides of the cubemap here. Note that order is important
+  'cube1.png', // +ve x
+  'cube4.png', // -ve x
+  'cube2.png', // ceil
+  'cube5.png', // floor
+  'cube3.png', // +ve z
+  'cube6.png', // -ve z
 ] );
 skyboxCubemap.format = THREE.RGBFormat;
 const skyboxCubeMapUniform = {type: 't', value: skyboxTexture}; //Q3 Answer making uniform for skybox to pass into shaders
 
 // HINT: update for Qb to the skyboxTexture
-scene.background = new THREE.Color( 0x89cff0 );
+scene.background = skyboxTexture;
 
 
 // Materials
