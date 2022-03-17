@@ -160,7 +160,8 @@ const kDiffuseUniform = {type: "f", value: 0.8};
 const kSpecularUniform = {type: "f", value: 0.4};
 const shininessUniform = {type: "f", value: 50.0};
 const lightPositionUniform = { type: "v3", value: shadowCam.position};
-const shayDTextureUniform = {type: 't', value: null}; //Qa HINT set texture uniform
+const shayDColor = {type: 't', value: shayDColorTexture}; //Qa HINT set texture uniform
+const shayDNormal = {type: 't', value: shayDNormalTexture}; //Qa HINT set texture uniform
 
 // load the skybox textures
 const skyboxCubemap = new THREE.CubeTextureLoader() //Q3 Answer, adding texture images to cubemap
@@ -226,7 +227,10 @@ const shayDMaterial = new THREE.ShaderMaterial({
     
     cameraPos: cameraPositionUniform,
     lightPosition: lightPositionUniform,
-    lightDirection: lightDirectionUniform
+    lightDirection: lightDirectionUniform,
+
+    colorMap: shayDColor,
+    normalMap: shayDNormal,
   }
 });
 

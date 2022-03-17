@@ -39,7 +39,7 @@ void main() {
 	vec3 light_SPC = specular * pow(max(0.0, dot(H, N)), shininess);
 
 	//TOTAL
-	light_DFF *= vec3(0.2,0.2,0.2); //TODO Q2 sample the color from the color txture here
+	light_DFF *= texture(colorMap, texCoord).xyz; //TODO Q2 sample the color from the color txture here
 	vec3 TOTAL = light_AMB + light_DFF + light_SPC;
 
 	gl_FragColor = vec4(TOTAL, 1.0);
