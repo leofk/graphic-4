@@ -347,11 +347,6 @@ terrain.position.y = -2.4;
 terrain.rotation.set(- Math.PI / 2, 0, 0);
 scene.add(terrain);
 
-// const shadowTerrain = new THREE.Mesh(terrainGeometry, shadowMaterial);
-// shadowTerrain.position.y = -2.4;
-// shadowTerrain.rotation.set(- Math.PI / 2, 0, 0);
-// shadowScene.add(shadowTerrain);
-
 // Look at the definition of loadOBJ to familiarize yourself with
 // how each parameter affects the loaded object.
 loadAndPlaceOBJ('gltf/armadillo.obj', envmapMaterial, function (armadillo) {
@@ -360,7 +355,6 @@ loadAndPlaceOBJ('gltf/armadillo.obj', envmapMaterial, function (armadillo) {
   armadillo.parent = worldFrame;
   scene.add(armadillo);
 });
-
 
 loadAndPlaceOBJ('gltf/armadillo.obj', shadowMaterial, function (armadillo) {
   armadillo.position.set(0.0, 4.0, 6.0);
