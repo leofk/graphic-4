@@ -27,16 +27,44 @@ uniform bool shadowOn;
 // FOR PCF: Returns a value in [0, 1] range, 1 indicating all sample points are occluded
 float calculateShadow() {
 
-	// HINT: define a "stepAmount", so texels you sample from the texture are some "stepAmount" number of texels apart 
-	float stepAmount = 0.0;
+	// perform perspective divide
+	vec3 projCoords = lightSpaceCoords.xyz / lightSpaceCoords.w;
+	// transform to [0,1] range
+	projCoords = projCoords * 0.5 + 0.5;
+	// get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
+	float closestDepth = texture(shadowMap, projCoords.xy).r;
+	// get depth of current fragment from light's perspective
+	float currentDepth = projCoords.z;
 
+	float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
+
+	// calculate bias (based on depth map resolution and slope)
+//	vec3 N = normalize(vcsNormal);
+//	vec3 L = normalize(vec3(viewMatrix * vec4(lightDirection, 0.0)));
+//	float bias = max(0.05 * (1.0 - dot(N, L)), 0.005);
+
+	// HINT: define a "stepAmount", so texels you sample from the texture are some "stepAmount" number of texels apart
+	float stepAmount = 1.0;
 	// HINT: the number of texels you sample from the texture
-	float sampleSize = 0.0;
-
+	float sampleSize = 25.0;
 	// HINT: the number of samples determind to be in shadow
 	float count = 0.0;
-	 
-	return count / sampleSize;
+	vec2 texelSize = vec2(1.0 / textureSize, 1.0 / textureSize);
+
+	for(float x = -2.0; x <= 2.0; x += stepAmount)
+	{
+		for(float y = -2.0; y <= 2.0; y += stepAmount)
+		{
+			float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
+			count += currentDepth > pcfDepth  ? 1.0 : 0.0;
+		}
+	}
+	float smoother = count / sampleSize;
+
+	// keep the shadow at 0.0 when outside the far_plane region of the light's frustum.
+	if (projCoords.z > 1.0) shadow = 0.0;
+
+	return shadow * smoother;
 }
 
 void main() {
@@ -63,19 +91,8 @@ void main() {
 	//Q1e do the shadow mapping
 	//Q1f PCF HINTS: see calculate shadow helper function
 	float shadow = 0.0;
-	if (shadowOn) {
-		// perform perspective divide
-		vec3 projCoords = lightSpaceCoords.xyz / lightSpaceCoords.w;
-		// transform to [0,1] range
-		projCoords = projCoords * 0.5 + 0.5;
-		// get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
-		float closestDepth = texture(shadowMap, projCoords.xy).r;
-		// get depth of current fragment from light's perspective
-		float currentDepth = projCoords.z;
-		// check whether current frag pos is in shadow
-		shadow = currentDepth > closestDepth ? 1.0 : 0.0;
-	}
 
+	if (shadowOn) shadow = calculateShadow();
 
 	//Qa add diffuse and specular components
 	//Q1e incorporate shadow value into the calculation

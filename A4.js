@@ -469,6 +469,7 @@ function update() {
 
     floorMaterial.uniforms.shadowOn.value = true;
     floorMaterial.uniforms.shadowMap.value = renderTarget.depthTexture;
+    floorMaterial.uniforms.textureSize.value = window.innerWidth;
 
     renderer.setRenderTarget( null );
     renderer.clear();
