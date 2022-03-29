@@ -22,6 +22,7 @@ uniform sampler2D normalMap;
 // Added ShadowMap
 uniform sampler2D shadowMap;
 uniform float textureSize;
+uniform bool shadowOn;
 
 // FOR PCF: Returns a value in [0, 1] range, 1 indicating all sample points are occluded
 float calculateShadow() {
@@ -44,6 +45,8 @@ void main() {
 	vec3 N = normalize(vcsNormal);
 	vec3 Nt = normalize(texture(normalMap, texCoord).xyz * 2.0 - 1.0);
 	vec3 L = normalize(vec3(viewMatrix * vec4(lightDirection, 0.0)));
+	vec3 V = normalize(-vcsPosition);
+	vec3 H = normalize(V + L);
 
 	//AMBIENT
 	vec3 light_AMB = ambientColor * kAmbient;
@@ -53,17 +56,31 @@ void main() {
 	vec3 light_DFF = diffuse * max(0.0, dot(N, L));
 
 	//SPECULAR
-	
+	vec3 specular = kSpecular * lightColor;
+	vec3 light_SPC = specular * pow(max(0.0, dot(H, N)), shininess);
+
 	//SHADOW
 	//Q1e do the shadow mapping
 	//Q1f PCF HINTS: see calculate shadow helper function
-	float shadow = 1.0;
+	float shadow = 0.0;
+	if (shadowOn) {
+		// perform perspective divide
+		vec3 projCoords = lightSpaceCoords.xyz / lightSpaceCoords.w;
+		// transform to [0,1] range
+		projCoords = projCoords * 0.5 + 0.5;
+		// get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
+		float closestDepth = texture(shadowMap, projCoords.xy).r;
+		// get depth of current fragment from light's perspective
+		float currentDepth = projCoords.z;
+		// check whether current frag pos is in shadow
+		shadow = currentDepth > closestDepth ? 1.0 : 0.0;
+	}
 
 
 	//Qa add diffuse and specular components
 	//Q1e incorporate shadow value into the calculation
 	light_DFF *= texture(colorMap, texCoord).xyz;
-	vec3 TOTAL = light_AMB + light_DFF;
+	vec3 TOTAL = light_AMB + (1.0 - shadow) * (light_DFF + light_SPC);
 
 	gl_FragColor = vec4(TOTAL, 1.0);
 }

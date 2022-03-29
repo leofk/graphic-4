@@ -193,18 +193,19 @@ scene.background = skyboxTexture;
 // Q1d HINT: Setup the uniforms needed for shadowing
 const postMaterial = new THREE.ShaderMaterial({
   uniforms: {
-    lightProjMatrix: {type: "m4", value: null},
-    lightViewMatrix: {type: "m4", value: null},
+    lightProjMatrix: {type: "m4", value: shadowCam.projectionMatrix },
+    lightViewMatrix: {type: "m4", value: shadowCam.matrixWorldInverse },
     tDiffuse: {type: "t", value: null},
-    tDepth: { type: "t", value: null }
+    tDepth: { type: "t", value: null}
   }
 });
 
 // Q1d HINT: Setup the uniforms needed for shadowing
 const floorMaterial = new THREE.ShaderMaterial({ 
   uniforms: {
-    lightProjMatrix: {type: "m4", value: null},
-    lightViewMatrix: {type: "m4", value: null},
+    lightProjMatrix: {type: "m4", value: shadowCam.projectionMatrix },
+    lightViewMatrix: {type: "m4", value: shadowCam.matrixWorldInverse },
+
     lightColor: lightColorUniform,
     ambientColor: ambientColorUniform,
     
@@ -221,6 +222,7 @@ const floorMaterial = new THREE.ShaderMaterial({
     normalMap: { type: "t", value: floorNormalTexture },
     shadowMap: {type: "t", value: null},
     textureSize: {type: "float", value: null},
+    shadowOn: {type: "bool", value: false},
   }
 });
 
@@ -247,7 +249,10 @@ const shayDMaterial = new THREE.ShaderMaterial({
 });
 
 // Needed for Shay depth info.
-const shadowMaterial = new THREE.ShaderMaterial({});
+const shadowMaterial = new THREE.ShaderMaterial({
+  uniforms: {
+  }
+});
 
 
 const matWorldUniform = {type: 'v3', value: camera.matrixWorld};
@@ -257,7 +262,7 @@ const envmapMaterial = new THREE.ShaderMaterial({
   uniforms: {
     skybox: skyboxCubeMapUniform,
     lightDirection: lightDirectionUniform,
-    matrixWorld: {type: "m4", value: camera.matrixWorldInverse}
+    matrixWorld: {type: "m4", value: camera.matrixWorld}
   }
 });
 
@@ -314,6 +319,26 @@ let object;
   });
 }
 
+const gltfFileName2 = 'gltf/pixel_v4.glb';
+let object2;
+{
+  const gltfLoader = new THREE.GLTFLoader();
+  gltfLoader.load(gltfFileName2, (gltf) => {
+    object2 = gltf.scene;
+    object2.traverse( function ( child ) {
+
+      if (child instanceof THREE.Mesh)
+      {
+        child.material = shadowMaterial;
+      }
+
+    } );
+    object2.scale.set(10.0, 10.0, 10.0);
+    object2.position.set(0.0, 0.0, -8.0);
+    shadowScene.add( object2 );
+  });
+}
+
 // Q1d HINT add it shadow scene too, with the shadowMaterial
 
 const terrainGeometry = new THREE.BoxGeometry(50, 50, 5);
@@ -321,6 +346,11 @@ const terrain = new THREE.Mesh(terrainGeometry, floorMaterial);
 terrain.position.y = -2.4;
 terrain.rotation.set(- Math.PI / 2, 0, 0);
 scene.add(terrain);
+
+// const shadowTerrain = new THREE.Mesh(terrainGeometry, shadowMaterial);
+// shadowTerrain.position.y = -2.4;
+// shadowTerrain.rotation.set(- Math.PI / 2, 0, 0);
+// shadowScene.add(shadowTerrain);
 
 // Look at the definition of loadOBJ to familiarize yourself with
 // how each parameter affects the loaded object.
@@ -331,13 +361,20 @@ loadAndPlaceOBJ('gltf/armadillo.obj', envmapMaterial, function (armadillo) {
   scene.add(armadillo);
 });
 
+
+loadAndPlaceOBJ('gltf/armadillo.obj', shadowMaterial, function (armadillo) {
+  armadillo.position.set(0.0, 4.0, 6.0);
+  armadillo.scale.set(0.075, 0.075, 0.075);
+  armadillo.parent = worldFrame;
+  shadowScene.add(armadillo);
+});
+
 // Q1d HINT add it shadow scene too, with the shadowMaterial
 
 // Depth Test scene
 const postPlane = new THREE.PlaneGeometry( 2, 2 );
 const postQuad = new THREE.Mesh( postPlane, postMaterial );
 postScene.add( postQuad );
-
 
 // Listen to keyboard events.
 const keyboard = new THREEx.KeyboardState();
@@ -381,8 +418,6 @@ function checkKeyboard() {
   lightDirection.sub(scene.position);
 }
 
-
-
 function updateMaterials() {
   envmapMaterial.needsUpdate = true;
   shayDMaterial.needsUpdate = true;
@@ -405,17 +440,41 @@ function update() {
   
   if (sceneHandler == 1) 
   {
-    renderer.render(scene, camera);
+    floorMaterial.uniforms.shadowOn.value = false;
+    renderer.render( scene, camera );
   }
   else if (sceneHandler == 2) 
   {
     // Q1d use the postScene to visualise the shadow map
     // HINT: use the render target for the first pass, update the appropriate uniforms in the second pass
+    renderer.setRenderTarget(renderTarget);
+    renderer.render( shadowScene, shadowCam);
+
+    postMaterial.uniforms.tDiffuse.value = renderTarget.texture;
+    postMaterial.uniforms.tDepth.value = renderTarget.depthTexture;
+
+    renderer.setRenderTarget( null );
+    renderer.clear();
+
+    renderer.render( postScene, postCam );
+
   }
   else if (sceneHandler == 3) 
   {
     // Q1e Do the multipass shadowing here
     // HINT: for PCF pass in the sizeof texture you're sampling from to the floor fragment shader
+
+    renderer.setRenderTarget(renderTarget);
+    renderer.render( shadowScene, shadowCam);
+
+    floorMaterial.uniforms.shadowOn.value = true;
+    floorMaterial.uniforms.shadowMap.value = renderTarget.depthTexture;
+
+    renderer.setRenderTarget( null );
+    renderer.clear();
+
+    renderer.render( scene, camera );
+
   }
   else // if sceneHandler is 4
   {
