@@ -46,14 +46,15 @@ float calculateShadow() {
 	// HINT: define a "stepAmount", so texels you sample from the texture are some "stepAmount" number of texels apart
 	float stepAmount = 1.0;
 	// HINT: the number of texels you sample from the texture
-	float sampleSize = 25.0;
+	float sampleSize = 9.0;
 	// HINT: the number of samples determind to be in shadow
 	float count = 0.0;
+
 	vec2 texelSize = vec2(1.0 / textureSize, 1.0 / textureSize);
 
-	for(float x = -2.0; x <= 2.0; x += stepAmount)
+	for(float x = -1.0; x <= 1.0; x += stepAmount)
 	{
-		for(float y = -2.0; y <= 2.0; y += stepAmount)
+		for(float y = -1.0; y <= 1.0; y += stepAmount)
 		{
 			float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
 			count += currentDepth > pcfDepth  ? 1.0 : 0.0;
