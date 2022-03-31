@@ -31,30 +31,21 @@ float calculateShadow() {
 	vec3 projCoords = lightSpaceCoords.xyz / lightSpaceCoords.w;
 	// transform to [0,1] range
 	projCoords = projCoords * 0.5 + 0.5;
-	// get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
-	float closestDepth = texture(shadowMap, projCoords.xy).r;
 	// get depth of current fragment from light's perspective
 	float currentDepth = projCoords.z;
-
-	float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
-
-	// calculate bias (based on depth map resolution and slope)
-//	vec3 N = normalize(vcsNormal);
-//	vec3 L = normalize(vec3(viewMatrix * vec4(lightDirection, 0.0)));
-//	float bias = max(0.05 * (1.0 - dot(N, L)), 0.005);
 
 	// HINT: define a "stepAmount", so texels you sample from the texture are some "stepAmount" number of texels apart
 	float stepAmount = 1.0;
 	// HINT: the number of texels you sample from the texture
-	float sampleSize = 9.0;
+	float sampleSize = 121.0;
 	// HINT: the number of samples determind to be in shadow
 	float count = 0.0;
 
 	vec2 texelSize = vec2(1.0 / textureSize, 1.0 / textureSize);
 
-	for(float x = -1.0; x <= 1.0; x += stepAmount)
+	for(float x = -5.0; x <= 5.0; x += stepAmount)
 	{
-		for(float y = -1.0; y <= 1.0; y += stepAmount)
+		for(float y = -5.0; y <= 5.0; y += stepAmount)
 		{
 			float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
 			count += currentDepth > pcfDepth  ? 1.0 : 0.0;
@@ -63,9 +54,9 @@ float calculateShadow() {
 	float smoother = count / sampleSize;
 
 	// keep the shadow at 0.0 when outside the far_plane region of the light's frustum.
-	if (projCoords.z > 1.0) shadow = 0.0;
+	if (projCoords.z > 1.0) smoother = 0.0;
 
-	return shadow * smoother;
+	return smoother;
 }
 
 void main() {
