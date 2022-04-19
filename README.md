@@ -1,11 +1,13 @@
-# yo
+# Diamond Stuff
 
-Shadow Realm
+**Shadow Realm**
+- npx http-server ./[file directory]
+- localhost:8080 
 - applying cube map
 - reflective shading using cube map
 - shadow mapping
 
-Pixel Storm
+**Pixel Storm**
 - npm start
 - texturing points instead of mesh
 - displacing points based on gui scroller
